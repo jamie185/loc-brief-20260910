@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
   :root {
     --ink: #171a1f;
@@ -50,12 +51,31 @@
     position: relative;
     background: #111;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .hero-wrap {
+    position: relative;
+    flex: 1;
+    min-height: 180px;
+  }
+  .hero-stack {
+    position: absolute;
+    inset: 0;
   }
   .hero {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .hero.on {
+    opacity: 1;
+    pointer-events: auto;
   }
   .thumbs {
     position: absolute;
@@ -65,6 +85,7 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
+    z-index: 2;
   }
   .thumbs button {
     padding: 0;
@@ -169,18 +190,76 @@
   .links a { color: var(--mute); }
   .links a:hover { color: var(--ink); }
 
-  .faces { display: flex; flex-wrap: wrap; gap: 14px; }
-  .face { width: 64px; }
+  .faces { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px; }
+  .face { width: 148px; }
   .face img {
-    width: 64px;
-    height: 72px;
+    width: 148px;
+    height: 176px;
     object-fit: cover;
     object-position: top;
     display: block;
     background: #ddd;
   }
-  .face b { display: block; font-size: 13px; margin-top: 6px; font-weight: 700; }
-  .face span { display: block; font-size: 12px; color: var(--mute); }
+  .face b { display: block; font-size: 16px; margin-top: 8px; font-weight: 700; }
+  .face span { display: block; font-size: 13px; color: var(--mute); }
+
+  .map-wrap {
+    flex: 0 0 230px;
+    height: 230px;
+    position: relative;
+    z-index: 1;
+  }
+  .map {
+    height: 100%;
+    background: #d9dee4;
+  }
+  .map-label {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 500;
+    background: #fff;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 10px;
+    pointer-events: none;
+    box-shadow: 0 1px 4px rgba(0,0,0,.12);
+  }
+  .ig-pop {
+    display: none;
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    width: min(420px, 92vw);
+    height: calc(100vh - 160px);
+    background: #fff;
+    border: 1px solid var(--line);
+    z-index: 20;
+    flex-direction: column;
+  }
+  .ig-pop.on { display: flex; }
+  .ig-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+  }
+  .ig-bar button, .ig-bar a {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+    color: var(--ink);
+  }
+  .ig-pop iframe {
+    flex: 1;
+    width: 100%;
+    border: 0;
+    background: #fafafa;
+  }
 
   .dock {
     background: var(--film);
@@ -261,7 +340,9 @@
   @media (max-width: 900px) {
     body { height: auto; }
     .stage { display: block; overflow: visible; }
-    .shots { height: 240px; }
+    .shots { height: auto; }
+    .hero-wrap { height: 240px; }
+    .map-wrap { height: 220px; flex-basis: 220px; }
     .copy { padding: 20px 18px 24px; }
     .club { font-size: 42px; }
     .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -269,14 +350,22 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .hero, .chip img { filter: none; }
+    .hero { transition: none; }
   }
 </style>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
   <main class="stage">
     <div class="shots">
-      <img class="hero" id="hero" alt="">
-      <div class="thumbs" id="thumbs"></div>
+      <div class="hero-wrap">
+        <div class="hero-stack" id="heroStack"></div>
+        <div class="thumbs" id="thumbs"></div>
+      </div>
+      <div class="map-wrap">
+        <div class="map" id="map"></div>
+        <div class="map-label" id="mapLabel"></div>
+      </div>
     </div>
     <div class="copy">
       <header class="top">
@@ -303,6 +392,13 @@
     </div>
     <p class="hint">Click a club, or use the arrow keys. Do not send this page to gym owners or trainers.</p>
   </nav>
+  <div class="ig-pop" id="igPop">
+    <div class="ig-bar">
+      <a id="igOpen" href="#" target="_blank" rel="noopener">Open Instagram</a>
+      <button type="button" id="igClose">Close</button>
+    </div>
+    <iframe id="igFrame" title="Club Instagram" loading="lazy"></iframe>
+  </div>
 
 <script>
 const clubs = [
@@ -315,6 +411,11 @@ const clubs = [
     addr: "14a/32-40 Stockton Avenue, Moorebank NSW 2170",
     drive: "13 min",
     km: "10.2 km",
+    lat: -33.933332,
+    lng: 150.949165,
+    ig: "https://www.instagram.com/snapfitnessmoorebank/",
+    igUser: "snapfitnessmoorebank",
+    likeMelb: "Same income band as Preston in Melbourne.",
     spend: "68",
     spendNote: "Preston",
     master: "59",
@@ -352,6 +453,11 @@ const clubs = [
     addr: "629-631 Hume Highway, Casula NSW 2170",
     drive: "7 min",
     km: "3.1 km",
+    lat: -33.955676,
+    lng: 150.89261,
+    ig: "https://www.instagram.com/snapfitnesscasula/",
+    igUser: "snapfitnesscasula",
+    likeMelb: "Weaker than Preston in Melbourne. Mid-tier Melbourne income, not Sunshine.",
     spend: "47",
     spendNote: "borderline",
     master: "54",
@@ -387,6 +493,11 @@ const clubs = [
     addr: "Shop 11/2 Hurricane Drive, Raby NSW 2566",
     drive: "20 min",
     km: "13.2 km",
+    lat: -34.02573913410538,
+    lng: 150.81955993001947,
+    ig: "https://www.instagram.com/snapfitnessraby/",
+    igUser: "snapfitnessraby",
+    likeMelb: "Weaker than Preston in Melbourne. Mid-tier Melbourne income.",
     spend: "45",
     spendNote: "borderline",
     master: "47",
@@ -424,6 +535,11 @@ const clubs = [
     addr: "46 Ben Lomond Road, Minto NSW 2566",
     drive: "18 min",
     km: "11.7 km",
+    lat: -34.03200293,
+    lng: 150.848382,
+    ig: "https://www.instagram.com/snapfitnessminto/",
+    igUser: "snapfitnessminto",
+    likeMelb: "Income sits nearer Sunshine in Melbourne than Preston.",
     spend: "38",
     spendNote: "Sunshine-adj",
     master: "45",
@@ -459,6 +575,11 @@ const clubs = [
     addr: "202 Queen Street, Campbelltown NSW 2560",
     drive: "23 min",
     km: "21 km",
+    lat: -34.067488905825,
+    lng: 150.813921898129,
+    ig: "https://www.instagram.com/snapfitnesscampbelltown/",
+    igUser: "snapfitnesscampbelltown",
+    likeMelb: "Weaker than Preston in Melbourne. Closer to Sunshine than Preston.",
     spend: "41",
     spendNote: "borderline",
     master: "42",
@@ -497,6 +618,11 @@ const clubs = [
     addr: "Shop 4, 138-140 Elizabeth Drive, Liverpool NSW 2170",
     drive: "15 min",
     km: "7.3 km",
+    lat: -33.916041,
+    lng: 150.910201,
+    ig: "https://www.instagram.com/snapfitnessliverpool/",
+    igUser: "snapfitnessliverpool",
+    likeMelb: "Income sits with Sunshine in Melbourne.",
     spend: "26",
     spendNote: "Sunshine",
     master: "42",
@@ -536,6 +662,11 @@ const clubs = [
     addr: "14 Mount Street, Mount Druitt NSW 2770",
     drive: "25 min",
     km: "26.3 km",
+    lat: -33.765737,
+    lng: 150.825162,
+    ig: "https://www.instagram.com/snapfitnessmountdruitt/",
+    igUser: "snapfitnessmountdruitt",
+    likeMelb: "Income sits with Sunshine in Melbourne.",
     spend: "19",
     spendNote: "Sunshine",
     master: "42",
@@ -573,6 +704,11 @@ const clubs = [
     addr: "1/1206 Canterbury Road, Roselands NSW 2196",
     drive: "22 min",
     km: "21.2 km",
+    lat: -33.935767,
+    lng: 151.06904,
+    ig: "https://www.instagram.com/snapfitness_roselands/",
+    igUser: "snapfitness_roselands",
+    likeMelb: "Weaker than Preston in Melbourne. Mid-tier Melbourne income.",
     spend: "48",
     spendNote: "borderline",
     master: "41",
@@ -602,7 +738,64 @@ const clubs = [
 
 let i = 0;
 let photo = 0;
-const spendTone = { go: "go", hold: "hold", no: "no" };
+const HOME = { lat: -33.9500347, lng: 150.86584, name: "Prestons" };
+const routes = {};
+let map, homeMark, gymMark, driveLine;
+
+function bigPhoto(src) {
+  return src.replace(/w=\d+/, "w=720");
+}
+function thumbPhoto(src) {
+  return src.replace(/w=\d+/, "w=240");
+}
+function preloadClub(c) {
+  c.photos.forEach(function (src) {
+    const im = new Image();
+    im.src = bigPhoto(src);
+  });
+  c.team.forEach(function (t) {
+    const im = new Image();
+    im.src = t[2];
+  });
+}
+function loadRoute(c) {
+  const url = "https://router.project-osrm.org/route/v1/driving/" +
+    HOME.lng + "," + HOME.lat + ";" + c.lng + "," + c.lat +
+    "?overview=full&geometries=geojson";
+  return fetch(url).then(function (r) { return r.json(); }).then(function (j) {
+    const geom = j.routes && j.routes[0] && j.routes[0].geometry;
+    if (geom && geom.coordinates) {
+      routes[c.id] = geom.coordinates.map(function (p) { return [p[1], p[0]]; });
+    }
+  }).catch(function () {});
+}
+
+function initMap() {
+  map = L.map("map", { zoomControl: false, attributionControl: false, scrollWheelZoom: false });
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18 }).addTo(map);
+  homeMark = L.circleMarker([HOME.lat, HOME.lng], {
+    radius: 8, color: "#171a1f", fillColor: "#171a1f", fillOpacity: 1, weight: 2
+  }).addTo(map).bindTooltip("Prestons, trainer", { permanent: false });
+  gymMark = L.circleMarker([clubs[0].lat, clubs[0].lng], {
+    radius: 9, color: "#c8102e", fillColor: "#c8102e", fillOpacity: 1, weight: 2
+  }).addTo(map);
+  driveLine = L.polyline([[HOME.lat, HOME.lng], [clubs[0].lat, clubs[0].lng]], {
+    color: "#c8102e", weight: 4, opacity: 0.9
+  }).addTo(map);
+  setTimeout(function () { map.invalidateSize(); }, 80);
+}
+
+function updateMap(c) {
+  if (!map) return;
+  gymMark.setLatLng([c.lat, c.lng]);
+  gymMark.bindTooltip(c.name, { permanent: false });
+  const pts = routes[c.id] || [[HOME.lat, HOME.lng], [c.lat, c.lng]];
+  driveLine.setLatLngs(pts);
+  map.fitBounds(L.latLngBounds(pts.concat([[HOME.lat, HOME.lng]])), { padding: [28, 28], maxZoom: 13 });
+  document.getElementById("mapLabel").textContent =
+    "Prestons to " + c.name + ": " + c.drive + ", " + c.km + " drive";
+  setTimeout(function () { map.invalidateSize(); }, 40);
+}
 
 function show(n, keepPhoto) {
   i = (n + clubs.length) % clubs.length;
@@ -619,37 +812,61 @@ function show(n, keepPhoto) {
     "<div><span>PTs on the floor</span><b>" + c.pts + "</b></div>" +
     "<div><span>Members</span><b>" + c.members.replace("~", "") + "</b></div>";
   document.getElementById("more").textContent =
-    c.spendNote + " catchment. Master " + c.master + ". Fit-out " + c.fit + ". " + c.sqm + " sqm. Household " + c.hh + ". Reviews " + c.reviews + ".";
+    c.likeMelb + " Master " + c.master + ". Fit-out " + c.fit + ". " + c.sqm + " sqm. Household " + c.hh + ". Reviews " + c.reviews + ".";
   const phone = document.getElementById("phone");
   phone.href = "tel:" + c.tel;
   phone.textContent = "Call " + c.phone;
   document.getElementById("links").innerHTML =
     '<a href="mailto:' + c.email + '">' + c.email + "</a>" +
     '<a href="' + c.web + '" target="_blank" rel="noopener">Club website</a>' +
-    '<a href="' + c.hub + '" target="_blank" rel="noopener">HubSpot company</a>';
+    '<a href="' + c.ig + '" target="_blank" rel="noopener" id="igLink">Instagram</a>' +
+    '<a href="' + c.hub + '" target="_blank" rel="noopener">HubSpot</a>';
+  document.getElementById("igLink").addEventListener("click", function (e) {
+    e.preventDefault();
+    openIg(c);
+  });
   document.getElementById("faces").innerHTML = c.team.map(function (t) {
     return '<div class="face"><img src="' + t[2] + '" alt="" onerror="this.style.background=\'#d7dbe0\';this.removeAttribute(\'src\')"><b>' + t[0] + "</b><span>" + t[1] + "</span></div>";
   }).join("");
-  setPhoto(photo);
+  paintPhotos(c, photo);
   document.querySelectorAll(".chip").forEach(function (el, idx) {
     el.classList.toggle("on", idx === i);
   });
   if (location.hash !== "#" + c.id) history.replaceState(null, "", "#" + c.id);
+  updateMap(c);
+  preloadClub(clubs[(i + 1) % clubs.length]);
 }
 
-function setPhoto(p) {
-  const c = clubs[i];
+function paintPhotos(c, p) {
   photo = p;
-  document.getElementById("hero").src = c.photos[p];
-  document.getElementById("hero").alt = c.name + " gym";
-  document.getElementById("thumbs").innerHTML = c.photos.map(function (src, idx) {
-    return '<button type="button" class="' + (idx === p ? "on" : "") + '" data-p="' + idx + '"><img src="' + src.replace(/w=\d+/, "w=240") + '" alt=""></button>';
-  }).join("");
+  const stack = document.getElementById("heroStack");
+  if (stack.dataset.club !== c.id) {
+    stack.dataset.club = c.id;
+    stack.innerHTML = c.photos.map(function (src, idx) {
+      return '<img class="hero' + (idx === p ? " on" : "") + '" src="' + bigPhoto(src) + '" alt="' + c.name + ' gym">';
+    }).join("");
+    document.getElementById("thumbs").innerHTML = c.photos.map(function (src, idx) {
+      return '<button type="button" class="' + (idx === p ? "on" : "") + '" data-p="' + idx + '"><img src="' + thumbPhoto(src) + '" alt=""></button>';
+    }).join("");
+  } else {
+    stack.querySelectorAll(".hero").forEach(function (img, idx) {
+      img.classList.toggle("on", idx === p);
+    });
+    document.querySelectorAll("#thumbs button").forEach(function (btn, idx) {
+      btn.classList.toggle("on", idx === p);
+    });
+  }
+}
+
+function openIg(c) {
+  document.getElementById("igOpen").href = c.ig;
+  document.getElementById("igFrame").src = "https://www.instagram.com/" + c.igUser + "/embed/";
+  document.getElementById("igPop").classList.add("on");
 }
 
 document.getElementById("strip").innerHTML = clubs.map(function (c, idx) {
   return '<button class="chip' + (idx === 0 ? " on" : "") + '" type="button" data-i="' + idx + '">' +
-    '<img src="' + c.photos[0].replace("w=900", "w=240") + '" alt="">' +
+    '<img src="' + thumbPhoto(c.photos[0]) + '" alt="">' +
     "<span>" + c.rank + " " + c.name + "<small>" + c.drive + ", spend " + c.spend + "</small></span></button>";
 }).join("");
 
@@ -659,11 +876,16 @@ document.getElementById("strip").addEventListener("click", function (e) {
 });
 document.getElementById("thumbs").addEventListener("click", function (e) {
   const b = e.target.closest("button");
-  if (b) setPhoto(+b.dataset.p);
+  if (b) paintPhotos(clubs[i], +b.dataset.p);
 });
 document.getElementById("prev").onclick = function () { show(i - 1); };
 document.getElementById("next").onclick = function () { show(i + 1); };
+document.getElementById("igClose").onclick = function () {
+  document.getElementById("igPop").classList.remove("on");
+  document.getElementById("igFrame").src = "";
+};
 document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") document.getElementById("igClose").click();
   if (e.key === "ArrowRight") show(i + 1);
   if (e.key === "ArrowLeft") show(i - 1);
 });
@@ -673,7 +895,14 @@ document.addEventListener("keydown", function (e) {
   const fromQuery = q ? clubs.findIndex(function (c) { return c.id === q; }) : -1;
   const fromHash = clubs.findIndex(function (c) { return "#" + c.id === location.hash; });
   const start = fromQuery >= 0 ? fromQuery : (fromHash >= 0 ? fromHash : 0);
+  initMap();
   show(start);
+  clubs.forEach(function (c) {
+    preloadClub(c);
+    loadRoute(c).then(function () {
+      if (clubs[i].id === c.id) updateMap(c);
+    });
+  });
 })();
 </script>
 </body>
