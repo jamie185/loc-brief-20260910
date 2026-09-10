@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prestons NSW gym brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #171a1f;
+    --paper: #f4f5f7;
+    --mute: #66707c;
+    --line: #e2e5ea;
+    --snap: #c8102e;
+    --film: #0e1114;
+    --go: #1f7a4d;
+    --hold: #8a6414;
+    --no: #b42318;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Atkinson Hyperlegible", sans-serif;
+    font-size: 18px;
+    line-height: 1.45;
+    display: flex;
+    flex-direction: column;
+  }
+  a { color: inherit; }
+  a:focus-visible, button:focus-visible {
+    outline: 3px solid var(--snap);
+    outline-offset: 2px;
+  }
+  button { font: inherit; }
+
+  .stage {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(280px, 44%) 1fr;
+    overflow: hidden;
+  }
+
+  .shots {
+    position: relative;
+    background: #111;
+    min-height: 0;
+  }
+  .hero {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .thumbs {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .thumbs button {
+    padding: 0;
+    border: 2px solid rgba(255,255,255,.45);
+    background: #222;
+    cursor: pointer;
+    height: 58px;
+  }
+  .thumbs button.on { border-color: #fff; }
+  .thumbs img {
+    width: 100%;
+    height: 54px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .copy {
+    min-width: 0;
+    overflow: auto;
+    padding: 22px 40px 18px;
+    display: flex;
+    flex-direction: column;
+  }
+  .top {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 0 0 28px;
+    color: var(--mute);
+    font-size: 13px;
+  }
+  .top strong {
+    color: var(--ink);
+    font-family: Syne, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .flag {
+    margin: 0 0 8px;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .flag.go { color: var(--snap); }
+  .flag.hold { color: var(--hold); }
+  .flag.no { color: var(--no); }
+  .club {
+    font-family: Syne, sans-serif;
+    font-size: 56px;
+    font-weight: 800;
+    line-height: 0.88;
+    letter-spacing: -0.03em;
+    margin: 0 0 10px;
+  }
+  .where { margin: 0 0 16px; color: var(--mute); font-size: 16px; }
+  .why {
+    margin: 0 0 22px;
+    max-width: 38ch;
+    font-size: 18px;
+    line-height: 1.5;
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px 18px;
+    margin: 0 0 8px;
+    padding: 16px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .stats b {
+    display: block;
+    font-family: Syne, sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  .stats span { color: var(--mute); font-size: 13px; }
+  .go { color: var(--go); }
+  .hold { color: var(--hold); }
+  .no { color: var(--no); }
+  .more { margin: 10px 0 22px; color: var(--mute); font-size: 14px; max-width: 52ch; }
+
+  .phone {
+    display: inline-flex;
+    align-self: flex-start;
+    align-items: center;
+    background: var(--snap);
+    color: #fff;
+    text-decoration: none;
+    font-family: Syne, sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: 0.01em;
+    padding: 14px 22px;
+    margin: 0 0 14px;
+    width: max-content;
+  }
+  .phone:hover { background: #a80d26; }
+  .links { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 22px; font-size: 15px; }
+  .links a { color: var(--mute); }
+  .links a:hover { color: var(--ink); }
+
+  .faces { display: flex; flex-wrap: wrap; gap: 14px; }
+  .face { width: 64px; }
+  .face img {
+    width: 64px;
+    height: 72px;
+    object-fit: cover;
+    object-position: top;
+    display: block;
+    background: #ddd;
+  }
+  .face b { display: block; font-size: 13px; margin-top: 6px; font-weight: 700; }
+  .face span { display: block; font-size: 12px; color: var(--mute); }
+
+  .dock {
+    background: var(--film);
+    color: #fff;
+    flex: 0 0 auto;
+    position: sticky;
+    bottom: 0;
+    z-index: 6;
+  }
+  .dock-row {
+    display: grid;
+    grid-template-columns: 48px 1fr 48px;
+    align-items: stretch;
+  }
+  .arrow {
+    width: 48px;
+    background: transparent;
+    color: #fff;
+    border: 0;
+    cursor: pointer;
+    font-size: 32px;
+    line-height: 1;
+  }
+  .arrow:hover { background: #1a1e24; }
+  .strip {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 3px;
+  }
+  .chip {
+    appearance: none;
+    position: relative;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    height: 112px;
+    overflow: hidden;
+    background: #000;
+    text-align: left;
+    color: #fff;
+  }
+  .chip img {
+    width: 100%;
+    height: 112px;
+    object-fit: cover;
+    display: block;
+    filter: brightness(0.38);
+  }
+  .chip.on img { filter: brightness(1); }
+  .chip span {
+    position: absolute;
+    left: 10px;
+    right: 8px;
+    bottom: 8px;
+    z-index: 1;
+    font-family: Syne, sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.1;
+    text-shadow: 0 1px 10px rgba(0,0,0,.85);
+  }
+  .chip small {
+    display: block;
+    font-family: "Atkinson Hyperlegible", sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    margin-top: 3px;
+    opacity: 0.9;
+  }
+  .chip.on { box-shadow: inset 0 3px 0 var(--snap); }
+  .hint {
+    color: #8b9198;
+    font-size: 12px;
+    margin: 0;
+    padding: 8px 16px 10px;
+  }
+
+  @media (max-width: 900px) {
+    body { height: auto; }
+    .stage { display: block; overflow: visible; }
+    .shots { height: 240px; }
+    .copy { padding: 20px 18px 24px; }
+    .club { font-size: 42px; }
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .strip { grid-template-columns: repeat(8, 140px); overflow-x: auto; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero, .chip img { filter: none; }
+  }
+</style>
+</head>
+<body>
+  <main class="stage">
+    <div class="shots">
+      <img class="hero" id="hero" alt="">
+      <div class="thumbs" id="thumbs"></div>
+    </div>
+    <div class="copy">
+      <header class="top">
+        <strong>Prestons, eight Snap clubs</strong>
+        <span>10 Sep 2026, admin only</span>
+      </header>
+      <p class="flag" id="flag"></p>
+      <h2 class="club" id="name"></h2>
+      <p class="where" id="where"></p>
+      <p class="why" id="why"></p>
+      <div class="stats" id="stats"></div>
+      <p class="more" id="more"></p>
+      <a class="phone" id="phone" href="#"></a>
+      <div class="links" id="links"></div>
+      <div class="faces" id="faces"></div>
+    </div>
+  </main>
+
+  <nav class="dock" aria-label="Club carousel">
+    <div class="dock-row">
+      <button class="arrow" id="prev" type="button" aria-label="Previous club">‹</button>
+      <div class="strip" id="strip"></div>
+      <button class="arrow" id="next" type="button" aria-label="Next club">›</button>
+    </div>
+    <p class="hint">Click a club, or use the arrow keys. Do not send this page to gym owners or trainers.</p>
+  </nav>
+
+<script>
+const clubs = [
+  {
+    id: "moorebank",
+    rank: 1,
+    name: "Moorebank",
+    flag: "Call first",
+    tone: "go",
+    addr: "14a/32-40 Stockton Avenue, Moorebank NSW 2170",
+    drive: "13 min",
+    km: "10.2 km",
+    spend: "68",
+    spendNote: "Preston",
+    master: "59",
+    members: "~400",
+    sqm: "~500",
+    fit: "New 90",
+    pts: "1",
+    hh: "$2,201/wk",
+    reviews: "New club",
+    why: "Only catchment in the set that can pay. Brand-new floor, one PT (Conan), and the desk already sells a free 2-step PT session. F45 and Soul Society sit nearby. Ask Isaac if Conan is building on the full list.",
+    phone: "0466 725 625",
+    tel: "+61466725625",
+    email: "moorebank@snapfitness.com.au",
+    web: "https://www.snapfitness.com/au/gyms/moorebank",
+    hub: "https://app.hubspot.com/contacts/39907799/record/0-2/58322489690",
+    photos: [
+      "https://storage-prod.twotaps.io/uploads/images/15d493cd-4866-4ca5-8d61-dcb13e5703ce/IMG0787.jpeg?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/71d4a2c6-717a-4818-8378-d10f0cf75444/IMG0797.jpeg?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/3311c198-ad6d-4504-bb13-037516fe1f64/IMG0795.jpeg?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/8c5e53d0-37ae-4d02-9d57-f656af07d15a/IMG0789.jpeg?w=900"
+    ],
+    team: [
+      ["Isaac", "Manager", "https://storage-prod.twotaps.io/uploads/images/761ac0cf-308b-41fb-803f-7cc5833b7787/tempImageXESenU.jpg?cx=0&cy=800&cw=3024&ch=3024&w=200"],
+      ["Tori", "Sales", "https://storage-prod.twotaps.io/uploads/images/2f653e62-0928-49f6-b470-2eab108e3518/tempImagexRBcug.jpg?cx=0&cy=504&cw=3024&ch=3024&w=200"],
+      ["Charlotte", "Sales", "https://storage-prod.twotaps.io/uploads/images/d2906687-e41b-42cb-af7a-e4e546672140/IMG4320.jpeg?cx=0&cy=1100&cw=4284&ch=4284&w=200"],
+      ["Conan", "PT", "https://storage-prod.twotaps.io/uploads/images/b4323350-1c49-49fa-a2b9-6d82c1fb3e01/tempImagexrsUgJ.gif?cx=0&cy=900&cw=4284&ch=4284&w=200"]
+    ]
+  },
+  {
+    id: "casula",
+    rank: 2,
+    name: "Casula",
+    flag: "Backup",
+    tone: "hold",
+    addr: "629-631 Hume Highway, Casula NSW 2170",
+    drive: "7 min",
+    km: "3.1 km",
+    spend: "47",
+    spendNote: "borderline",
+    master: "54",
+    members: "~550",
+    sqm: "~520",
+    fit: "Revamp 75",
+    pts: "2",
+    hh: "$1,730/wk",
+    reviews: "4.6 / 105",
+    why: "Closest club. Recently revamped. Two PTs already on the floor. Catchment is only okay, household size 3.15 stretches the income. Use this if Moorebank list access is weak.",
+    phone: "0434 692 442",
+    tel: "+61434692442",
+    email: "casula@snapfitness.com.au",
+    web: "https://www.snapfitness.com/au/gyms/casula",
+    hub: "https://app.hubspot.com/contacts/39907799/record/0-2/58322489689",
+    photos: [
+      "https://storage-prod.twotaps.io/uploads/images/0cbe01b1-c17c-449c-87cb-8517606fd498/freeweights.png?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/fcab5100-3e3b-4424-afd8-c05a199619dd/squatracks2.png?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/d14d1741-cd3c-4366-a08d-a4feaad435d8/Cardio2.png?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/3b02e1bd-197f-4dee-8a2b-e057a5422da1/Plateloaded.png?w=900"
+    ],
+    team: [
+      ["Alana Ellis", "PT", "https://storage-prod.twotaps.io/uploads/images/c64e9d5a-1875-49ad-8993-bf17703a71ac/Capture.PNG?cx=7&cy=0&cw=369&ch=369&w=200"],
+      ["Loui Kokalovski", "PT", "https://storage-prod.twotaps.io/uploads/images/32c95013-65b5-4d6c-903e-1c6b6492b7fa/15666.webp?w=200"]
+    ]
+  },
+  {
+    id: "raby",
+    rank: 3,
+    name: "Raby",
+    flag: "Second club only",
+    tone: "hold",
+    addr: "Shop 11/2 Hurricane Drive, Raby NSW 2566",
+    drive: "20 min",
+    km: "13.2 km",
+    spend: "45",
+    spendNote: "borderline",
+    master: "47",
+    members: "~600",
+    sqm: "~350",
+    fit: "New 85",
+    pts: "1",
+    hh: "$1,907/wk",
+    reviews: "5.0 / 112",
+    why: "New shop, sauna, 5.0 from 112 reviews, one PT. Family suburb of about 6,000. Fine as a second club, not the lead. Three managers versus one trainer.",
+    phone: "0499 700 100",
+    tel: "+61499700100",
+    email: "raby@snapfitness.com.au",
+    web: "https://www.snapfitness.com/au/gyms/raby",
+    hub: "https://app.hubspot.com/contacts/39907799/record/0-2/58322489695",
+    photos: [
+      "https://storage-prod.twotaps.io/uploads/images/af85403d-9f08-4927-ad3f-9ec1713e27db/20241230072418.jpg?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/34717945-05ea-4d34-a2b7-e753a3260bec/20241230072448.jpg?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/7e828814-3f08-4111-8121-30a4351722d8/20241230072610.jpg?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/787a8133-74b1-413a-8bc7-ad1c946e59b1/20241230072824.jpg?w=900"
+    ],
+    team: [
+      ["Connor", "Manager", "https://storage-prod.twotaps.io/uploads/images/caac2f3c-ec39-4075-9f9c-6363b77a697a/Connor-website-pic.jpg?cx=0&cy=700&cw=2889&ch=2889&w=200"],
+      ["Zara", "Asst", "https://storage-prod.twotaps.io/uploads/images/8c50b54e-eb08-40b6-854f-06dbc9a0bf7f/Zara-profile-board.jpg?w=200"],
+      ["Chloe", "Asst", "https://storage-prod.twotaps.io/uploads/images/8351c4bf-4d46-41cd-9a23-85c30d3e592d/Chloe-Website-Pic.jpeg?w=200"],
+      ["Prashant", "PT", "https://storage-prod.twotaps.io/uploads/images/25292b94-d088-48d2-84a1-c34cb9014fcd/Prashant-photo.jpg?w=200"]
+    ]
+  },
+  {
+    id: "minto",
+    rank: 4,
+    name: "Minto",
+    flag: "Skip for buying power",
+    tone: "no",
+    addr: "46 Ben Lomond Road, Minto NSW 2566",
+    drive: "18 min",
+    km: "11.7 km",
+    spend: "38",
+    spendNote: "Sunshine-adj",
+    master: "45",
+    members: "~550",
+    sqm: "~650",
+    fit: "Mid-new 75",
+    pts: "1",
+    hh: "$1,646/wk",
+    reviews: "4.3 / 100",
+    why: "Polly gets real review love. Pilates and sauna. One PT. IER is 2/10 and public housing is material. F45 and Plus Fitness sit on the same strip. Do not pick this for buying power.",
+    phone: "0488 087 085",
+    tel: "+61488087085",
+    email: "minto@snapfitness.com.au",
+    web: "https://www.snapfitness.com/au/gyms/minto",
+    hub: "https://app.hubspot.com/contacts/39907799/record/0-2/58322489691",
+    photos: [
+      "https://storage-prod.twotaps.io/uploads/images/cf6df8b3-1216-4742-9bf2-238be0c03fbf/SNAPMINTO-52-1.jpg?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/08a6eef8-863e-48c4-91ed-271bd2200c69/SNAPMINTO-2.jpg?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/55f8f772-f66e-448d-8bae-c7dfcddf3dcd/SNAPMINTO-43.jpg?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/4d231521-21be-46a8-8e95-d50ee3135852/SNAPMINTO-4.jpg?w=900"
+    ],
+    team: [
+      ["Polly", "Manager", "https://storage-prod.twotaps.io/uploads/images/c01f764d-12c9-4ab0-a433-52d5f8b94863/IMG0550.jpg?cx=0&cy=200&cw=1242&ch=1242&w=200"],
+      ["Melvin Ang", "PT", "https://storage-prod.twotaps.io/uploads/images/25600113-52ce-4a8c-bd5a-848cbd7e4f7a/SNAPMINTO-71.jpg?cx=1312&cy=0&cw=3376&ch=3376&w=200"]
+    ]
+  },
+  {
+    id: "campbelltown",
+    rank: 5,
+    name: "Campbelltown",
+    flag: "Skip, list is full",
+    tone: "no",
+    addr: "202 Queen Street, Campbelltown NSW 2560",
+    drive: "23 min",
+    km: "21 km",
+    spend: "41",
+    spendNote: "borderline",
+    master: "42",
+    members: "~950",
+    sqm: "~900",
+    fit: "New 80",
+    pts: "4",
+    hh: "$1,432/wk",
+    reviews: "4.9 / 337",
+    why: "Biggest format, multi-level with a creche. Four dedicated PTs and the gym already advertises free PT. Busy room, crowded bench. Opposite of an open list.",
+    phone: "0400 256 084",
+    tel: "+61400256084",
+    email: "campbelltown@snapfitness.com.au",
+    web: "https://www.snapfitness.com/au/gyms/campbelltown",
+    hub: "https://app.hubspot.com/contacts/39907799/record/0-2/58322489692",
+    photos: [
+      "https://storage-prod.twotaps.io/uploads/images/cc2826f0-4b92-4cf7-9c65-88e4b78b47d8/308265069_637914827793124_8280318203195698995_n.webp?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/a80ed6e4-3813-41ee-8cf5-13c0ca4d0018/IMG_2562.jpg?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/98510f1c-ca5d-4e71-a89b-aeb27847769c/IMG_2583.jpg?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/22c70b7a-adfb-4686-a77e-16daca596771/IMG_2571.jpg?w=900"
+    ],
+    team: [
+      ["Namirah", "Manager", "https://storage-prod.twotaps.io/uploads/images/c3d4413a-a764-4c7a-9401-2dec12da1e81/IMG8251.jpg?cx=350&cy=900&cw=1467&ch=1467&w=200"],
+      ["Cruise", "PT", "https://storage-prod.twotaps.io/uploads/images/f2b852cb-202c-476f-9164-e12f02595ece/IMG6484.jpg?w=200"],
+      ["Grant", "PT", "https://storage-prod.twotaps.io/uploads/images/7e4ce056-8a68-4588-8fa7-dd79ae160036/IMG0350.jpg?w=200"],
+      ["Lisa", "PT", "https://storage-prod.twotaps.io/uploads/images/0b1b58f0-8f73-46ed-9243-ce0c5798adae/Meet-your-Trainer-TV-15.jpg?w=200"],
+      ["Kruz", "PT", "https://storage-prod.twotaps.io/uploads/images/bb5bd27f-be8f-411e-8b8d-79f56ab5cd1e/Meet-your-Trainer-TV-16.jpg?w=200"]
+    ]
+  },
+  {
+    id: "liverpool",
+    rank: 6,
+    name: "Liverpool",
+    flag: "Skip, Sunshine",
+    tone: "no",
+    addr: "Shop 4, 138-140 Elizabeth Drive, Liverpool NSW 2170",
+    drive: "15 min",
+    km: "7.3 km",
+    spend: "26",
+    spendNote: "Sunshine",
+    master: "42",
+    members: "~1,100",
+    sqm: "~350",
+    fit: "New-look 80",
+    pts: "3",
+    hh: "$1,303/wk",
+    reviews: "4.9 / 402",
+    why: "Polished room, 402 reviews, two franchisees on the page. Suburb is Sunshine: IER decile 1, 10% unemployment, 65% apartments. Do not pick it off review count.",
+    phone: "0457 897 214",
+    tel: "+61457897214",
+    email: "liverpool@snapfitness.com.au",
+    web: "https://www.snapfitness.com/au/gyms/liverpool",
+    hub: "https://app.hubspot.com/contacts/39907799/record/0-2/58322489693",
+    photos: [
+      "https://storage-prod.twotaps.io/uploads/images/0a173f90-934f-459c-b25d-60b7da71a357/liverpool-front.jpg?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/fd8f9a87-e6d3-4843-8735-37eca63ef967/cardio.png?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/f272b0ab-2620-46f0-9c0b-6b46e94f98b9/IMG_20230401_072125_136.jpg?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/20f5bbb5-a70e-4224-a1da-a95769d04515/showers.png?w=900"
+    ],
+    team: [
+      ["Bianca", "Manager", "https://storage-prod.twotaps.io/uploads/images/e3744141-efeb-401a-8caf-0a882cde8c89/IMG6577.png?cx=60&cy=900&cw=4000&ch=4000&w=200"],
+      ["Josh", "PT", "https://storage-prod.twotaps.io/uploads/images/aac48aab-7fd8-4e60-9f3c-1e310fbe335f/IMG_1702.jpg?w=200"],
+      ["Arriza", "PT", "https://storage-prod.twotaps.io/uploads/images/a0f666cd-4d2f-4a21-9a22-e770ea815839/PHOTO-2026-03-23-10-15-12.jpg?w=200"],
+      ["Farook", "PT", "https://storage-prod.twotaps.io/uploads/images/b96b87ec-5300-4f4b-8a06-a8b51763a4d5/IMG0931.jpg?w=200"],
+      ["Gavin", "Owner", "https://storage-prod.twotaps.io/uploads/images/3c3f06f1-be2a-4060-a273-5769ec1b89fb/IMG_2182.png?w=200"],
+      ["Travis", "Owner", "https://storage-prod.twotaps.io/uploads/images/6a8c4f28-d8c6-46cc-a30c-982df6f107f9/IMG_2584.png?w=200"]
+    ]
+  },
+  {
+    id: "mountdruitt",
+    rank: 7,
+    name: "Mount Druitt",
+    flag: "Skip, Sunshine",
+    tone: "no",
+    addr: "14 Mount Street, Mount Druitt NSW 2770",
+    drive: "25 min",
+    km: "26.3 km",
+    spend: "19",
+    spendNote: "Sunshine",
+    master: "42",
+    members: "~1,300",
+    sqm: "~850",
+    fit: "New 88",
+    pts: "1 listed",
+    hh: "$1,478/wk",
+    reviews: "4.9 / 856",
+    why: "Biggest, shiniest box: sauna, reformer, 856 reviews. Catchment is Sunshine. One Head PT on the website does not match a club this size. Do not lead with it.",
+    phone: "0499 991 425",
+    tel: "+61499991425",
+    email: "mountdruitt@snapfitness.com.au",
+    web: "https://www.snapfitness.com/au/gyms/mount-druitt",
+    hub: "https://app.hubspot.com/contacts/39907799/record/0-2/58322489696",
+    photos: [
+      "https://storage-prod.twotaps.io/uploads/images/78ad4414-ae77-4fea-b76e-eeb95e217d7d/SnapFitnessMtDruitt129.jpg?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/05cef0e4-1e82-4803-9452-50695259dafa/SnapFitnessMtDruitt126.jpg?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/416baf3b-042d-46e9-afb8-e04ce2edfa65/SnapFitnessMtDruitt113.jpg?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/e1369fed-d7d2-467d-8547-e3f97e1d6f4e/Treadmills_CardioEquipmentatMountDruittGym.jpg?w=900"
+    ],
+    team: [
+      ["Jamison", "Manager", "https://storage-prod.twotaps.io/uploads/images/23196bba-522e-4d04-ad8a-028538ac9450/IMG8680.JPG?w=200"],
+      ["Crystal", "Asst", "https://storage-prod.twotaps.io/uploads/images/86f10bf8-e59c-48e1-96f7-f8f054078951/Crystal-Antonio.jpg?w=200"],
+      ["Shanyce", "Sales", "https://storage-prod.twotaps.io/uploads/images/fa84acc5-2e3a-40ac-919b-295995869284/IMG5429.jpeg?w=200"],
+      ["Joash", "Head PT", "https://storage-prod.twotaps.io/uploads/images/f073b754-4500-4462-99f7-30a5e7b02fe2/Joash_PersonalTrainerPhoto.jpg?w=200"]
+    ]
+  },
+  {
+    id: "roselands",
+    rank: 8,
+    name: "Roselands",
+    flag: "Last resort",
+    tone: "hold",
+    addr: "1/1206 Canterbury Road, Roselands NSW 2196",
+    drive: "22 min",
+    km: "21.2 km",
+    spend: "48",
+    spendNote: "borderline",
+    master: "41",
+    members: "~450",
+    sqm: "~400",
+    fit: "Mid 50",
+    pts: "1",
+    hh: "$1,685/wk",
+    reviews: "4.3 / 67",
+    why: "Smallest energy. No weekend staffed hours listed. Long east drive. Skip unless Moorebank and Casula both fail the owner call.",
+    phone: "0412 767 900",
+    tel: "+61412767900",
+    email: "roselands@snapfitness.com.au",
+    web: "https://www.snapfitness.com/au/gyms/roselands",
+    hub: "https://app.hubspot.com/contacts/39907799/record/0-2/58322489694",
+    photos: [
+      "https://storage-prod.twotaps.io/uploads/images/df9cc811-4380-4aa3-8333-61f4b50f9d8a/IMG6917.jpg?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/e4062788-71f4-45aa-8447-cafc3cb9faf8/IMG_2870.webp?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/de447b11-dec8-4993-a80e-0bff620ed214/IMG6924.jpg?w=900",
+      "https://storage-prod.twotaps.io/uploads/images/8d407189-9cda-4500-adcf-5d359889cb8e/IMG6922.jpg?w=900"
+    ],
+    team: [
+      ["Fred Succar", "PT", "https://storage-prod.twotaps.io/uploads/images/d405c8b5-ca9f-49dc-b0c0-531de14bae71/IMG6598-1.jpg?w=200"]
+    ]
+  }
+];
+
+let i = 0;
+let photo = 0;
+const spendTone = { go: "go", hold: "hold", no: "no" };
+
+function show(n, keepPhoto) {
+  i = (n + clubs.length) % clubs.length;
+  const c = clubs[i];
+  if (!keepPhoto) photo = 0;
+  document.getElementById("flag").className = "flag " + c.tone;
+  document.getElementById("flag").textContent = c.rank + " of 8. " + c.flag;
+  document.getElementById("name").textContent = c.name;
+  document.getElementById("where").textContent = c.addr + ". " + c.drive + " from Prestons, " + c.km + ".";
+  document.getElementById("why").textContent = c.why;
+  document.getElementById("stats").innerHTML =
+    '<div><span>Spend</span><b class="' + c.tone + '">' + c.spend + "</b></div>" +
+    "<div><span>Drive</span><b>" + c.drive + "</b></div>" +
+    "<div><span>PTs on the floor</span><b>" + c.pts + "</b></div>" +
+    "<div><span>Members</span><b>" + c.members.replace("~", "") + "</b></div>";
+  document.getElementById("more").textContent =
+    c.spendNote + " catchment. Master " + c.master + ". Fit-out " + c.fit + ". " + c.sqm + " sqm. Household " + c.hh + ". Reviews " + c.reviews + ".";
+  const phone = document.getElementById("phone");
+  phone.href = "tel:" + c.tel;
+  phone.textContent = "Call " + c.phone;
+  document.getElementById("links").innerHTML =
+    '<a href="mailto:' + c.email + '">' + c.email + "</a>" +
+    '<a href="' + c.web + '" target="_blank" rel="noopener">Club website</a>' +
+    '<a href="' + c.hub + '" target="_blank" rel="noopener">HubSpot company</a>';
+  document.getElementById("faces").innerHTML = c.team.map(function (t) {
+    return '<div class="face"><img src="' + t[2] + '" alt="" onerror="this.style.background=\'#d7dbe0\';this.removeAttribute(\'src\')"><b>' + t[0] + "</b><span>" + t[1] + "</span></div>";
+  }).join("");
+  setPhoto(photo);
+  document.querySelectorAll(".chip").forEach(function (el, idx) {
+    el.classList.toggle("on", idx === i);
+  });
+  if (location.hash !== "#" + c.id) history.replaceState(null, "", "#" + c.id);
+}
+
+function setPhoto(p) {
+  const c = clubs[i];
+  photo = p;
+  document.getElementById("hero").src = c.photos[p];
+  document.getElementById("hero").alt = c.name + " gym";
+  document.getElementById("thumbs").innerHTML = c.photos.map(function (src, idx) {
+    return '<button type="button" class="' + (idx === p ? "on" : "") + '" data-p="' + idx + '"><img src="' + src.replace(/w=\d+/, "w=240") + '" alt=""></button>';
+  }).join("");
+}
+
+document.getElementById("strip").innerHTML = clubs.map(function (c, idx) {
+  return '<button class="chip' + (idx === 0 ? " on" : "") + '" type="button" data-i="' + idx + '">' +
+    '<img src="' + c.photos[0].replace("w=900", "w=240") + '" alt="">' +
+    "<span>" + c.rank + " " + c.name + "<small>" + c.drive + ", spend " + c.spend + "</small></span></button>";
+}).join("");
+
+document.getElementById("strip").addEventListener("click", function (e) {
+  const b = e.target.closest(".chip");
+  if (b) show(+b.dataset.i);
+});
+document.getElementById("thumbs").addEventListener("click", function (e) {
+  const b = e.target.closest("button");
+  if (b) setPhoto(+b.dataset.p);
+});
+document.getElementById("prev").onclick = function () { show(i - 1); };
+document.getElementById("next").onclick = function () { show(i + 1); };
+document.addEventListener("keydown", function (e) {
+  if (e.key === "ArrowRight") show(i + 1);
+  if (e.key === "ArrowLeft") show(i - 1);
+});
+
+(function boot() {
+  const q = new URLSearchParams(location.search).get("club");
+  const fromQuery = q ? clubs.findIndex(function (c) { return c.id === q; }) : -1;
+  const fromHash = clubs.findIndex(function (c) { return "#" + c.id === location.hash; });
+  const start = fromQuery >= 0 ? fromQuery : (fromHash >= 0 ? fromHash : 0);
+  show(start);
+})();
+</script>
+</body>
+</html>
