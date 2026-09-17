@@ -1,0 +1,51 @@
+name: Publish isolated Spring Kickstart V2
+on:
+  push:
+    branches: [main]
+    paths: ['_spring-kickstart-v2/manifest.json']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: spring-kickstart-v2-publish
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Restore the exact approved standalone HTML
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const crypto = require('node:crypto');
+          const zlib = require('node:zlib');
+          const root = '_spring-kickstart-v2/';
+          const manifest = JSON.parse(fs.readFileSync(root + 'manifest.json', 'utf8'));
+          if (manifest.codec !== 'brotli-base64' || !Number.isInteger(manifest.parts) || manifest.parts < 1 || manifest.parts > 50) throw Error('Invalid manifest');
+          let encoded = '';
+          for (let i = 0; i < manifest.parts; i++) encoded += fs.readFileSync(root + 'part-' + String(i).padStart(2, '0') + '.txt', 'utf8').trim();
+          if (!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) throw Error('Invalid transport encoding');
+          const html = zlib.brotliDecompressSync(Buffer.from(encoded, 'base64'), {maxOutputLength: 3000000});
+          const digest = crypto.createHash('sha256').update(html).digest('hex');
+          if (html.length !== manifest.bytes || digest !== manifest.sha256) throw Error('Source verification failed; refusing to publish');
+          if (!html.toString('utf8').includes('noindex,nofollow,noarchive')) throw Error('Noindex protection missing');
+          fs.mkdirSync('spring-kickstart-v2', {recursive: true});
+          fs.writeFileSync('spring-kickstart-v2/index.html', html);
+          console.log('Verified standalone HTML:', html.length, 'bytes, SHA256:', digest);
+          NODE
+      - name: Commit only the new standalone page
+        shell: bash
+        run: |
+          git add -- spring-kickstart-v2/index.html
+          if git diff --cached --quiet; then
+            echo 'Published content already matches.'
+            exit 0
+          fi
+          test "$(git diff --cached --name-only)" = 'spring-kickstart-v2/index.html'
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Publish approved Spring Kickstart V2 HTML in isolated folder'
+          git push origin HEAD:main
