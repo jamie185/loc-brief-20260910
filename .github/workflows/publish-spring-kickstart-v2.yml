@@ -18,26 +18,28 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
-      - name: Restore and validate the exact standalone HTML
+      - name: Transfer and validate the exact standalone HTML
         shell: bash
         run: |
           node <<'NODE'
           const fs = require('node:fs');
           const crypto = require('node:crypto');
-          const zlib = require('node:zlib');
-          const root = '_spring-kickstart-v2/';
-          const manifest = JSON.parse(fs.readFileSync(root + 'manifest.json', 'utf8'));
-          if (manifest.codec !== 'brotli-base64' || !Number.isInteger(manifest.parts) || manifest.parts < 1 || manifest.parts > 50) throw Error('Invalid manifest');
-          let encoded = '';
-          for (let i = 0; i < manifest.parts; i++) encoded += fs.readFileSync(root + 'part-' + String(i).padStart(2, '0') + '.txt', 'utf8').trim();
-          if (!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) throw Error('Invalid transport encoding');
-          const html = zlib.brotliDecompressSync(Buffer.from(encoded, 'base64'), {maxOutputLength: 3000000});
-          const digest = crypto.createHash('sha256').update(html).digest('hex');
-          if (html.length !== manifest.bytes || digest !== manifest.sha256) throw Error('Checksum mismatch; refusing to publish');
-          if (!html.toString('utf8').includes('noindex,nofollow,noarchive')) throw Error('Noindex protection missing');
-          fs.mkdirSync('spring-kickstart-v2', {recursive: true});
-          fs.writeFileSync('spring-kickstart-v2/index.html', html);
-          console.log('Verified:', html.length, 'bytes; SHA256:', digest);
+          (async () => {
+            const m = JSON.parse(fs.readFileSync('_spring-kickstart-v2/manifest.json', 'utf8'));
+            if (m.codec !== 'https-sha256' || m.bytes !== 990016 || m.sha256 !== '36b0fa1e51962d14b95d87ee69b6fef314abd7ebbc81644b4b29b082ea901065') throw Error('Unexpected source manifest');
+            const url = new URL(m.source_url);
+            if (url.protocol !== 'https:' || url.hostname !== 'sdmntprnznorth.oaiusercontent.com') throw Error('Unexpected transfer host');
+            console.log('::add-mask::' + m.source_url);
+            const response = await fetch(url, {signal: AbortSignal.timeout(90000), redirect: 'error'});
+            if (!response.ok) throw Error('Transfer failed: HTTP ' + response.status);
+            const html = Buffer.from(await response.arrayBuffer());
+            const digest = crypto.createHash('sha256').update(html).digest('hex');
+            if (html.length !== m.bytes || digest !== m.sha256) throw Error('Checksum mismatch; refusing to publish');
+            if (!html.toString('utf8').includes('noindex,nofollow,noarchive')) throw Error('Noindex protection missing');
+            fs.mkdirSync('spring-kickstart-v2', {recursive: true});
+            fs.writeFileSync('spring-kickstart-v2/index.html', html);
+            console.log('Verified:', html.length, 'bytes; SHA256:', digest);
+          })().catch(error => {console.error(error.message); process.exit(1);});
           NODE
       - name: Commit only the isolated page
         shell: bash
