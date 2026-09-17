@@ -1,0 +1,167 @@
+/* One owner for the six-week layout. Legacy week-specific rules are removed. */
+body.edition #six-weeks{
+ padding:72px 0 24px!important;
+ --week-accent:#638bf2;--week-ink:#26344b;--week-muted:#7a889d;
+}
+body.edition #six-weeks #journey-title{
+ width:100%;max-width:none;margin:0 auto 30px;padding:0;
+ text-align:center;font-size:clamp(36px,4vw,54px)!important;
+ line-height:1.08!important;letter-spacing:-.055em!important;
+}
+body.edition #six-weeks #journey-title>span{color:#8695ac}
+body.edition #six-weeks .week-tabs{
+ display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;
+ width:100%;height:auto;min-height:0;margin:0 0 18px;padding:6px;
+ background:#f3f5f9;border:1px solid #eaf0f6;border-radius:21px;
+ overflow:auto;scrollbar-width:none;scroll-snap-type:x proximity;
+}
+body.edition #six-weeks .week-tabs::-webkit-scrollbar{display:none}
+body.edition #six-weeks .week-rail{display:none}
+body.edition #six-weeks .week-tabs>button{
+ display:flex;align-items:center;justify-content:center;gap:9px;
+ min-width:0;min-height:52px;height:auto;padding:10px 12px;
+ border:0;border-radius:15px;background:transparent;color:var(--week-muted);
+ font:500 13px/1.3 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+ white-space:nowrap;position:relative;scroll-snap-align:center;
+ transform:none;transition:background .25s,color .25s,box-shadow .25s;
+}
+body.edition #six-weeks .week-tabs>button::after{display:none}
+body.edition #six-weeks .week-tabs>button>b{
+ display:block;width:auto;height:auto;min-width:17px;margin:0;padding:0;
+ background:none;border:0;border-radius:0;box-shadow:none;
+ color:#97a5ba;font-size:11px;font-weight:500;line-height:1.3;font-variant-numeric:tabular-nums;
+ transform:none;scale:1;
+}
+body.edition #six-weeks .week-tabs>button>span{margin:0;font:inherit}
+body.edition #six-weeks .week-tabs>button:hover{color:var(--week-ink);background:#ffffff80}
+body.edition #six-weeks .week-tabs>button[aria-selected=true]{
+ color:var(--week-ink);background:white;box-shadow:0 2px 7px #24344b0b;
+}
+body.edition #six-weeks .week-tabs>button[aria-selected=true]>b{color:#6487c5}
+body.edition #six-weeks #week-detail{
+ display:grid;grid-template-columns:minmax(0,1fr) minmax(270px,350px);
+ align-items:center;gap:48px;width:100%;height:auto;min-height:330px;
+ margin:0;padding:36px 44px;background:linear-gradient(120deg,#f5f8fd,#edf3fd)!important;
+ border:1px solid #e9eff7!important;border-radius:28px!important;
+ text-align:left;overflow:visible;isolation:isolate;transform-style:flat;
+}
+body.edition #six-weeks .week-studio-copy{padding:0;min-width:0;max-width:540px}
+body.edition #six-weeks #week-index{
+ display:block;margin:0 0 12px;color:#8899b1;font-size:12px;
+ font-weight:500;line-height:1.4;letter-spacing:.035em;
+}
+body.edition #six-weeks #week-headline{
+ margin:0;max-width:none;font-size:clamp(29px,3vw,38px)!important;
+ line-height:1.12!important;letter-spacing:-.05em!important;color:#252f3f;
+}
+body.edition #six-weeks #week-description{
+ margin:12px 0 0;max-width:34ch;font-size:16px;line-height:1.5;color:var(--week-muted);
+}
+body.edition #six-weeks #week-actions{display:grid;gap:2px;margin:20px 0 0;padding:0;max-width:450px}
+body.edition #six-weeks .week-action{
+ display:flex;align-items:center;gap:12px;min-height:40px;height:auto;
+ width:100%;padding:6px 0;border:0;border-radius:10px;box-shadow:none;
+ background:none;color:#566880;text-align:left;font-size:14px;
+ font-weight:450;line-height:1.45;transition:color .2s;
+}
+body.edition #six-weeks .week-action>span{
+ display:grid;place-items:center;width:23px;height:23px;flex:0 0 23px;
+ border:1px solid #cfdcee;border-radius:50%;background:#ffffffd9;
+ color:transparent;transition:background .25s,border-color .25s,color .25s;
+}
+body.edition #six-weeks .week-action .icon{width:13px;height:13px;stroke-width:2}
+body.edition #six-weeks .week-action:hover{color:#263b5e}
+body.edition #six-weeks .week-action[aria-pressed=true]>span{background:#648bf0;border-color:#648bf0;color:#fff}
+body.edition #six-weeks .week-scene{
+ display:flex;align-items:center;justify-content:center;min-width:0;
+ width:100%;min-height:0;height:auto;margin:0;padding:0;position:static;
+}
+body.edition #six-weeks .week-scene-card{
+ display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+ grid-template-areas:'heading heading' 'ring avatar' 'note note';
+ align-items:center;justify-items:center;gap:20px 14px;
+ width:100%;max-width:350px;height:auto;min-height:0;
+ padding:25px;background:#fff;border:1px solid #fff;
+ border-radius:25px;box-shadow:0 18px 40px -24px #334e7833;
+ position:relative;inset:auto;transform:none;rotate:none;translate:none;scale:1;
+ transform-style:flat;will-change:auto;overflow:visible;
+}
+body.edition #six-weeks .week-card-heading{
+ grid-area:heading;display:flex;align-items:center;justify-content:space-between;
+ gap:12px;width:100%;margin:0;min-width:0;
+}
+body.edition #six-weeks #week-card-title{font-size:15px;line-height:1.4;font-weight:600;color:#26334a;letter-spacing:-.02em}
+body.edition #six-weeks #week-card-date{font-size:11px;line-height:1.4;color:#8998ae;white-space:nowrap}
+body.edition #six-weeks .week-progress-ring{
+ grid-area:ring;display:grid;place-items:center;position:relative;inset:auto;
+ width:min(132px,100%);height:auto;min-height:0;aspect-ratio:1;
+ margin:0;padding:0;transform:none;rotate:none;translate:none;scale:1;
+}
+body.edition #six-weeks .week-progress-ring>svg{
+ display:block;position:absolute;inset:0;width:100%;height:100%;
+ transform:rotate(-90deg);overflow:visible;
+}
+body.edition #six-weeks .week-progress-ring circle{fill:none;stroke:#edf2f9;stroke-width:9}
+body.edition #six-weeks .week-progress-ring .week-ring-fill{
+ stroke:var(--week-accent);stroke-linecap:round;stroke-dasharray:408.41;
+ stroke-dashoffset:var(--week-offset,408.41);
+ transition:stroke-dashoffset .6s cubic-bezier(.22,1,.36,1);
+}
+body.edition #six-weeks #week-complete{
+ display:block;position:relative;margin:0;padding:0;color:#344b70;
+ font-size:44px;font-weight:550;line-height:1;letter-spacing:-.04em;
+ text-align:center;font-variant-numeric:tabular-nums;
+}
+body.edition #six-weeks #week-complete>small{
+ display:block;margin-top:7px;font-size:11px;line-height:1.3;
+ font-weight:400;letter-spacing:0;color:#8999b1;
+}
+body.edition #six-weeks #week-avatar{
+ grid-area:avatar;display:grid;place-items:center;position:static;inset:auto;
+ width:100%;height:140px;min-width:0;margin:0;padding:0;
+ transform:none;rotate:none;translate:none;scale:1;
+}
+body.edition #six-weeks #week-avatar svg{
+ display:block;width:116px;height:136px;max-width:100%;margin:0;
+ object-fit:contain;overflow:visible;
+}
+body.edition #six-weeks #week-card-note{
+ grid-area:note;display:block;position:static;inset:auto;
+ margin:0;padding:16px 0 0;border-top:1px solid #edf1f6;
+ width:100%;text-align:center;font-size:12px;line-height:1.5;color:#8696ac;
+}
+body.edition #six-weeks .week-capsule{display:none}
+body.edition #six-weeks .chapter-complete #week-card-note{color:#507db6}
+@media(max-width:950px){
+ body.edition #six-weeks #week-detail{gap:28px;padding:28px;grid-template-columns:minmax(0,1fr) minmax(260px,310px)}
+ body.edition #six-weeks .week-tabs{gap:2px}
+ body.edition #six-weeks .week-tabs>button{padding-inline:8px;gap:6px;font-size:12px}
+ body.edition #six-weeks #week-headline{font-size:31px!important}
+ body.edition #six-weeks .week-scene-card{padding:21px;gap:18px 10px}
+}
+@media(max-width:700px){
+ body.edition #six-weeks{padding:48px 0 12px!important}
+ body.edition #six-weeks #journey-title{font-size:35px!important;text-align:left;line-height:1.1!important;margin-bottom:24px}
+ body.edition #six-weeks .week-tabs{grid-template-columns:repeat(6,minmax(116px,1fr));max-width:100%;margin-bottom:14px}
+ body.edition #six-weeks .week-tabs>button{min-height:44px;font-size:12px;gap:9px;padding:10px}
+ body.edition #six-weeks #week-detail{grid-template-columns:minmax(0,1fr);gap:24px;padding:24px;min-height:0;border-radius:24px!important}
+ body.edition #six-weeks #week-headline{font-size:30px!important}
+ body.edition #six-weeks #week-description{font-size:15px;max-width:33ch}
+ body.edition #six-weeks #week-actions{margin-top:17px;gap:2px}
+ body.edition #six-weeks .week-action{min-height:40px;font-size:13px}
+ body.edition #six-weeks .week-scene-card{padding:21px;gap:17px 10px;max-width:350px}
+ body.edition #six-weeks #week-avatar{height:126px}
+ body.edition #six-weeks #week-avatar svg{width:106px;height:124px}
+ body.edition #six-weeks #week-complete{font-size:41px}
+}
+@media(max-width:379px){
+ body.edition #six-weeks #week-detail{padding:19px;gap:20px}
+ body.edition #six-weeks .week-scene-card{padding:18px;gap:15px 8px}
+ body.edition #six-weeks #week-avatar{height:112px}
+ body.edition #six-weeks #week-avatar svg{width:94px;height:110px}
+ body.edition #six-weeks #week-complete{font-size:35px}
+ body.edition #six-weeks #week-complete>small{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ body.edition #six-weeks *,body.edition #six-weeks *::before,body.edition #six-weeks *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
