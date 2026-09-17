@@ -1,0 +1,118 @@
+name: Repair Spring Kickstart week card
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/repair-spring-week-card.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+concurrency:
+  group: spring-kickstart-v2-publish
+  cancel-in-progress: false
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply the exact browser-tested repair
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import re, hashlib
+          target=Path('spring-kickstart-v2/index.html')
+          expected_before='36b0fa1e51962d14b95d87ee69b6fef314abd7ebbc81644b4b29b082ea901065'
+          expected_after='ced5ab0509afa3958d5dd104953d181503fe5c2339c84482fbfe837070c68b92'
+          digest=hashlib.sha256(target.read_bytes()).hexdigest()
+          if digest==expected_after:
+              print('The exact tested repair is already applied.')
+              raise SystemExit(0)
+          assert digest==expected_before, 'Preview changed since review. Refusing to overwrite.'
+          html=target.read_text()
+          week=re.compile(r'(?:#six-weeks\b|#journey-title\b|#week-[\w-]+|\.journey-section\b|\.week-(?:tabs|rail|timeline|detail|studio|scene|card|progress-ring|ring-fill|action|capsule)[\w-]*|\[data-week(?:[=\]])?)')
+          def clean_style(m):
+              def rule(x):
+                  parts=x.group(1).split(',')
+                  kept=[part for part in parts if not week.search(re.sub(r'/\*[\s\S]*?\*/','',part))]
+                  if len(kept)==len(parts): return x.group(0)
+                  return ','.join(kept)+'{'+x.group(2)+'}' if kept else ''
+              css=re.sub(r'([^{}]+)\{([^{}]*)\}',rule,m.group(2))
+              return m.group(1)+css+m.group(3)
+          html=re.sub(r'(<style\b[^>]*>)([\s\S]*?)(</style>)',clean_style,html)
+          old="q('.week-scene-card').animate([{opacity:.4,transform:'rotate(0deg) translateY(10px)'},{opacity:1,transform:'rotate(2deg) translateY(0)'}],{duration:420,easing:'cubic-bezier(.16,1,.3,1)'});"
+          new="q('.week-scene-card').getAnimations().forEach(a=>a.cancel());q('.week-scene-card').animate([{opacity:.6},{opacity:1}],{duration:320,easing:'ease-out'});"
+          assert html.count(old)==1
+          html=html.replace(old,new)
+          old='function jfiFrame(time){const t='
+          new="function jfiFrame(time){if(!$('jfi-request')||!$('jfi-answer'))return;const t="
+          assert html.count(old)==1
+          html=html.replace(old,new)
+          html=html.replace('<div class="week-progress-ring">','<div class="week-progress-ring" role="progressbar" aria-label="Weekly steps completed" aria-valuemin="0" aria-valuemax="3" aria-valuenow="0">')
+          old="$ ('week-card-note').textContent=data[4];".replace('$ (','$(')
+          assert html.count(old)==1
+          html=html.replace(old,"$('week-card-note').textContent=done.length===3?'Week complete. Nice work.':data[4];q('.week-progress-ring').setAttribute('aria-valuenow',String(done.length));")
+          html=re.sub(r'<script id="elite-refine-script">[\s\S]*?</script>', '', html)
+          events="""<script id="jf-week-layout-events">
+          (()=>{
+           const root=document.getElementById('six-weeks');
+           const tabs=root?.querySelector('.week-tabs');
+           if(!tabs)return;
+           const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+           tabs.addEventListener('click',event=>{
+            const tab=event.target.closest('[data-week]');
+            if(!tab||tabs.scrollWidth<=tabs.clientWidth)return;
+            const target=tab.getBoundingClientRect(),rail=tabs.getBoundingClientRect();
+            const left=tabs.scrollLeft+target.left-rail.left-(tabs.clientWidth-target.width)/2;
+            tabs.scrollTo({left:Math.max(0,left),behavior:reduced.matches?'auto':'smooth'});
+           });
+          })();
+          </script>
+          """
+          html=html.replace('</body>',events+'</body>',1)
+          css=Path('_spring-kickstart-v2/week-card-v2.css').read_text()
+          html=html.replace('</head>','<style id="jf-week-layout-v2">\n'+css+'\n</style></head>',1)
+          assert hashlib.sha256(html.encode()).hexdigest()==expected_after, 'Generated output differs from the browser-tested HTML.'
+          assert 'noindex,nofollow,noarchive' in html
+          assert "form-action 'none'" in html
+          target.write_text(html)
+          print('Verified exact tested HTML:',expected_after)
+          PY
+      - name: Commit only the isolated preview HTML
+        shell: bash
+        run: |
+          git add -- spring-kickstart-v2/index.html
+          if git diff --cached --quiet; then exit 0; fi
+          test "$(git diff --cached --name-only)" = 'spring-kickstart-v2/index.html'
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Fix V2 week card overflow and consolidate conflicting journey styles'
+          git push origin HEAD:main
+      - name: Rebuild the existing GitHub Pages preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds"
+      - name: Verify the public page matches the tested file
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import hashlib,time,urllib.request
+          expected=hashlib.sha256(Path('spring-kickstart-v2/index.html').read_bytes()).hexdigest()
+          url='https://jamie185.github.io/loc-brief-20260910/spring-kickstart-v2/'
+          for attempt in range(36):
+              try:
+                  request=urllib.request.Request(url+'?week-card-v2='+expected[:12],headers={'Cache-Control':'no-cache'})
+                  with urllib.request.urlopen(request,timeout=12) as response:
+                      live=response.read()
+                  if hashlib.sha256(live).hexdigest()==expected:
+                      print('VERIFIED live page matches the browser-tested full HTML:',url)
+                      print('SHA256:',expected)
+                      break
+              except Exception as error:
+                  print(type(error).__name__)
+              time.sleep(5)
+          else:
+              raise SystemExit('The HTML is committed, but the public page did not update within the verification window.')
+          PY
