@@ -1,0 +1,32 @@
+name: Clarity offline basemap
+on:
+  push:
+    branches: [preview/clarity-assets-20260920]
+    paths: [.github/workflows/clarity-map.yml]
+permissions:
+  contents: read
+jobs:
+  map:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Localise the nine overview tiles
+        run: |
+          mkdir -p map
+          python3 - <<'PY'
+          import pathlib, urllib.request, time, json
+          out=pathlib.Path('map');rows=[]
+          for x in range(923,926):
+            for y in range(627,630):
+              u=f'https://basemaps.cartocdn.com/light_all/10/{x}/{y}@2x.png'
+              req=urllib.request.Request(u,headers={'User-Agent':'JamieFitness-offline-review/1.0'})
+              with urllib.request.urlopen(req,timeout=20) as r: b=r.read()
+              if b[:8]!=b'\x89PNG\r\n\x1a\n':raise ValueError('Expected PNG basemap')
+              (out/f'{x}-{y}.png').write_bytes(b);rows.append({'x':x,'y':y,'url':u});time.sleep(.4)
+          (out/'metadata.json').write_text(json.dumps({'zoom':10,'x0':923,'y0':627,'cols':3,'rows':3,'tilePixels':512,'attribution':'© OpenStreetMap contributors © CARTO','tiles':rows},indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: clarity-melbourne-map
+          path: map/
+          retention-days: 3
