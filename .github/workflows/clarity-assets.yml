@@ -1,0 +1,91 @@
+name: Clarity offline assets
+on:
+  push:
+    branches: [preview/clarity-assets-20260920]
+    paths: [.github/workflows/clarity-assets.yml]
+permissions:
+  contents: read
+jobs:
+  assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Fetch public website assets only
+        shell: bash
+        run: |
+          mkdir -p bundle/media bundle/source bundle/skills bundle/vendor
+          python3 - <<'PY'
+          import concurrent.futures, hashlib, json, pathlib, re, urllib.request, urllib.parse
+          root=pathlib.Path('bundle'); report=[]
+          def get(url,path):
+              try:
+                  req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 (Jamie Fitness preview asset build)'})
+                  with urllib.request.urlopen(req,timeout=25) as r:
+                      data=r.read(15000000); typ=r.headers.get('Content-Type','')
+                  path=pathlib.Path(path); path.parent.mkdir(parents=True,exist_ok=True); path.write_bytes(data)
+                  report.append({'url':url,'path':str(path),'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest(),'contentType':typ,'ok':True})
+                  return data
+              except Exception as e:
+                  report.append({'url':url,'path':str(path),'ok':False,'error':str(e)}); return b''
+          main=get('https://jamiefitness.au/',root/'source/main-site.html').decode('utf-8','replace')
+          landing=get('https://jamiefitness.au/spring-kickstart/',root/'source/campaign.html').decode('utf-8','replace')
+          paths=['https://jamiefitness.au/assets/widgets/google-reviews/'+f for f in ['widget.js','style.css','reviews.json']]
+          jobs=[(u,root/'source'/u.rsplit('/',1)[1]) for u in paths]
+          for name in ['about.jpg','hero.jpg','jamie-ipad.jpg','bench.jpg','andrea.webp','ganga.webp','mohammed.webp','rose.webp','avidu.webp','blake.webp']:
+              jobs.append(('https://jamiefitness.au/spring-kickstart/img/'+name,root/'media'/name))
+          portraits={
+            'daniel':'2026/08/Daniel_Baltutis-v8.webp?v=8',
+            'nabiha':'2026/02/Untitled-design-2026-02-15T181852.467-png.webp',
+            'emma':'2026/02/Untitled-design-2026-02-13T145630.925-png.webp',
+            'marcus':'2024/01/PT-Profile-Website-Pic-5.png',
+            'guido':'2024/11/PT-Profile-Website-Pic-11-png.webp',
+            'kelsey':'2026/02/Untitled-design-47-png.webp',
+            'caitlin':'2025/12/1-png.webp',
+            'sophie':'2025/12/Untitled-design-2025-12-31T215045.216-png.webp',
+            'lincoln':'2025/12/2-png.webp','julia':'2025/12/3-png.webp',
+            'ahmad':'2025/11/Untitled-design-2025-11-23T183207.536-png.webp',
+            'dane':'2025/11/Untitled-design-2025-11-10T135848.735-png.webp',
+            'teresa':'2025/10/Untitled-design-2025-10-22T102710.456-png.webp',
+            'finn':'2025/10/Untitled-design-2025-10-11T171044.717-png.webp',
+            'samantha':'2025/06/PT-Profile-Website-Pic-6.webp'}
+          for name,p in portraits.items():jobs.append(('https://jamiefitness.au/wp-content/uploads/'+p,root/'media'/('trainer-'+name+'.img')))
+          for raw in set(re.findall(r'''["']([^"']+\.(?:webp|png|jpe?g)(?:\?[^"']*)?)["']''',main+landing)):
+              u=urllib.parse.urljoin('https://jamiefitness.au/',raw)
+              if urllib.parse.urlparse(u).hostname not in ('jamiefitness.au','www.jamiefitness.au'):continue
+              if 'data:' in raw or len(raw)>500:continue
+              name=pathlib.PurePosixPath(urllib.parse.urlparse(u).path).name
+              jobs.append((u,root/'media'/name))
+          with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:list(pool.map(lambda p:get(*p),jobs[:100]))
+          videos=[('Rose','939436641',''),('Gavin','939436683','e7fbaa31b3'),('Amber','939436803','cfeee89ba2'),('Michael','939436778','f41c3bbc74'),('Mary','939436604','18b7a97aa0'),('Chelsea','939436734','84b5da2e69')]
+          for name,vid,h in videos:
+              u='https://vimeo.com/'+vid+('/'+h if h else '')
+              b=get('https://vimeo.com/api/oembed.json?url='+urllib.parse.quote(u,safe='')+'&width=600',root/'source'/('video-'+name+'.json'))
+              try:
+                  thumb=json.loads(b)['thumbnail_url'];get(thumb,root/'media'/('video-'+name+'.jpg'))
+              except Exception:pass
+          for name,url in [
+            ('frontend-design.md','https://raw.githubusercontent.com/anthropics/claude-code/main/plugins/frontend-design/skills/frontend-design/SKILL.md'),
+            ('unslop-contract.md','https://raw.githubusercontent.com/theclaymethod/unslop/main/references/core-contract.md'),
+            ('perfect-web-clone.md','https://raw.githubusercontent.com/ericshang98/perfect-web-clone-skill/main/SKILL.md')]:get(url,root/'skills'/name)
+          (root/'download-report.json').write_text(json.dumps(report,indent=2))
+          print('Assets:',sum(r['ok'] for r in report),'of',len(report))
+          PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare matching Remotion packages for the isolated renderer
+        shell: bash
+        run: |
+          mkdir remotion-tools && cd remotion-tools
+          npm init -y >/dev/null
+          V=$(npm view remotion version)
+          npm install --no-audit --no-fund react react-dom remotion@$V @remotion/player@$V @remotion/renderer@$V @remotion/bundler@$V esbuild
+          printf "export * from 'remotion'; export {Player} from '@remotion/player'; export * as React from 'react'; export {createRoot} from 'react-dom/client';" > bridge.js
+          npx esbuild bridge.js --bundle --minify --format=iife --global-name=JFRemotion --outfile=../bundle/vendor/remotion-browser.js --define:process.env.NODE_ENV='"production"'
+          tar -czf ../bundle/vendor/remotion-tools.tar.gz package.json package-lock.json node_modules
+      - uses: actions/upload-artifact@v4
+        with:
+          name: clarity-offline-assets
+          path: bundle/
+          retention-days: 3
+          if-no-files-found: error
